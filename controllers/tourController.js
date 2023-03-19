@@ -1,6 +1,94 @@
 const Tour = require("./../models/toursModel");
 const APIFeatures = require("./../utils/apiFeatures");
 
+/////////////// Tour Stat using Aggregation Pipeline /////////////////////
+
+exports.getTourStats = async (req, res) => {
+  try {
+    const stats = await Tour.aggregate([
+      // Filter the Docs
+      { $match: { price: { $gt: 1000 } } },
+
+      // Group the docs
+      {
+        $group: {
+          _id: "$difficulty",
+          numTours: { $sum: 1 },
+          numRatings: { $sum: "$ratingsQuantity" },
+          avgRatings: { $avg: "$ratingsAverage" },
+          avgPrice: { $avg: "$price" },
+          minPrice: { $min: "$price" },
+          maxPrice: { $max: "$price" }
+        }
+      },
+
+      // Sort by avgPrice
+      {
+        $sort: { avgPrice: 1 }
+      }
+    ]);
+
+    res.status(200).json({
+      status: "Success",
+      data: stats
+    });
+  } catch (error) {
+    res.status(404).json({
+      status: "Fail",
+      message: error
+    });
+  }
+};
+
+/////////////// Get Busyiest Month using Aggregation Pipeline /////////////////////
+
+exports.getBusyMonth = async (req, res) => {
+  try {
+    const year = req.params.year * 1;
+
+    const plan = await Tour.aggregate([
+      { $unwind: "$startDates" },
+      {
+        $match: {
+          startDates: {
+            $gte: new Date(`${year}-01-01`),
+            $lte: new Date(`${year}-12-31`)
+          }
+        }
+      },
+      {
+        $group: {
+          _id: { $month: "$startDates" },
+          numToursStarts: { $sum: 1 },
+          tours: { $push: "$name" }
+        }
+      },
+      {
+        $addFields: { month: "$_id" }
+      },
+      {
+        $project: {
+          _id: 0
+        }
+      },
+      {
+        $sort: { numToursStarts: -1 }
+      }
+    ]);
+
+    res.status(200).json({
+      status: "Success",
+      length: plan.length,
+      data: plan
+    });
+  } catch (error) {
+    res.status(404).json({
+      status: "Fail",
+      message: error
+    });
+  }
+};
+
 ////////////////////////// Alias Route ///////////////////////////
 exports.fillTop5CheapRoute = (req, res, next) => {
   req.query.limit = 5;

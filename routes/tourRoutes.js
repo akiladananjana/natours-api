@@ -10,6 +10,9 @@ tourRouter.get(
   tourController.getAllTours
 );
 
+tourRouter.get("/tour-stats", tourController.getTourStats);
+tourRouter.get("/monthly-plan/:year", tourController.getBusyMonth);
+
 tourRouter
   .get("/", tourController.getAllTours)
 
