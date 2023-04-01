@@ -1,7 +1,7 @@
-const morgan = require('morgan');
-const express = require('express');
-const tourRouter = require('./routes/tourRoutes');
-const userRouter = require('./routes/userRoutes');
+const morgan = require("morgan");
+const express = require("express");
+const tourRouter = require("./routes/tourRoutes");
+const userRouter = require("./routes/userRoutes");
 
 const app = express();
 
@@ -10,9 +10,7 @@ app.use(express.json());
 
 // LOGGIN MIDDLEWARE
 
-if (process.env.NODE_ENV === 'development') {
-  app.use(morgan('dev'));
-}
+app.use(morgan("dev"));
 
 // MIDDLEWARE TO ADD A TIME TO REQUESTS
 app.use((req, res, next) => {
@@ -30,8 +28,8 @@ app.use((req, res, next) => {
 
 // if request hits "/api/v1/tours/" handover to -> "tourRouter" Router
 // if request hits "/api/v1/users/" handover to -> "usersRouter" Router
-app.use('/api/v1/tours/', tourRouter);
-app.use('/api/v1/users/', userRouter);
+app.use("/api/v1/tours/", tourRouter);
+app.use("/api/v1/users/", userRouter);
 
 // TOUR RESOURCE
 // app.get('/api/v1/tours', getAllTours);

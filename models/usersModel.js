@@ -1,3 +1,4 @@
+const crypto = require("crypto");
 const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcryptjs");
@@ -24,6 +25,12 @@ const userSchema = new mongoose.Schema({
     minlength: 8
   },
 
+  role: {
+    type: String,
+    enum: ["admin", "user", "tour-guide"],
+    default: "user"
+  },
+
   passwordConfirm: {
     type: String,
     required: [true, "A tour must provide the password again"],
@@ -33,7 +40,11 @@ const userSchema = new mongoose.Schema({
       }
     },
     message: "Passwords are not same"
-  }
+  },
+
+  passwordLastChanged: Date,
+  passwordResetToken: String,
+  passwordResetTokenExpire: Date
 });
 
 // Mongoose Middleware / Executes before saving the doc to DB
@@ -45,6 +56,17 @@ userSchema.pre("save", async function(next) {
 
   next();
 });
+
+userSchema.methods.createForgetPasswordToken = function() {
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  this.passwordResetToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+  this.passwordResetTokenExpire = Date.now() + 10 * 60 * 1000;
+
+  return resetToken;
+};
 
 const User = mongoose.model("User", userSchema);
 
